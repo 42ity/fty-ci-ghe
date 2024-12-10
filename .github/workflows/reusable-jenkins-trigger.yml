@@ -1,0 +1,77 @@
+name: Reusable workflow Trigger Jenkins multibranch
+
+on:
+  workflow_call:
+    inputs:
+      project-name:
+        required: true
+        type: string
+      branch-name:
+          required: true
+          type: string
+      project-organization:
+          required: true
+          type: string        
+      user-name:
+        required: true
+        type: string    
+      commitID:
+        required: true
+        type: string        
+      jobStartTime:
+        required: true
+        type: string        
+      prID:
+        required: true
+        type: string
+      prBase:
+        required: true
+        type: string
+
+      #secrets:
+      #token:
+      # required: true
+
+jobs:
+  trigger-jenkins:
+    runs-on: self-hosted
+
+    steps:
+    - name: Display Variables
+      id: vars
+      run: |
+          echo "Prepository name : ${{ inputs.project-name }}"
+          echo "Branch name : ${{ inputs.branch-name }}"
+          echo "Organization name : ${{ inputs.project-organization }}"
+          echo "User name : ${{ inputs.user-name }}"
+          echo "Commit ID : ${{ inputs.commitID }}"
+          echo "Job start Time : ${{ inputs.jobStartTime }}"
+          echo "Pull request ID : ${{ inputs.prID }}"
+          echo "Pull request Base : ${{ inputs.prBase }}"
+
+          userEmail=$(echo "${{ inputs.user-name }}" | sed "s/-eaton/@eaton.com/g")
+          echo "User Email name : ${userEmail}"       
+          echo "user-email=$userEmail" >> $GITHUB_OUTPUT
+
+    - name: Construct Curl Command
+      id: curl_command
+      run: |
+
+        curl_command="curl -k -X POST \"https://jenkins-test.mbt.lab.etn.com/job/IPM2/job/TRIGGER_PIPELINES/job/TRIGGER_BUILD/buildWithParameters\" \
+        --user \"{{ secrets.GHE_TRIGGER_JENKINS_USER }}:{{ secrets.GHE_TRIGGER_JENKINS_TOKEN }}\" \
+        --data-urlencode \"PROJECT_NAME=${{ inputs.project-name }}\" \
+        --data-urlencode \"PROJECT_ORGANIZATION=${{ inputs.project-organization }}\" \
+        --data \"PROJECT_BRANCH=${{ inputs.branch-name }}\" \
+        --data-urlencode \"EMAILS_ADDRESS_RECEPIENTS=${{ steps.vars.outputs.user-email }}\" \
+        --data-urlencode \"GHE_JOB_START_TIME=${{ inputs.jobStartTime }}\" \
+        --data-urlencode \"COMMIT_ID=${{ inputs.commitID }}\" \
+        --data-urlencode \"PR_ID=${{ inputs.prID }}\" \
+        --data-urlencode \"PR_BASE=${{ inputs.prBase}}\""
+   
+
+        echo $curl_command > curl_command.sh
+
+    - name: Trigger Jenkins Build
+      run: |
+        cat curl_command.sh
+        sh curl_command.sh
