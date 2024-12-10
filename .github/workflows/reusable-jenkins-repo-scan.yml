@@ -23,7 +23,7 @@ jobs:
         - name: Construct Curl Command
           run: |
             curl_command="curl -k -X POST \"https://jenkins-test.mbt.lab.etn.com/job/IPM2/job/TRIGGER_PIPELINES/job/TRIGGER_REPO_SCAN/buildWithParameters\" \
-            --user \"{{ secrets.GHE_TRIGGER_JENKINS_USER }}:{{ secrets.GHE_TRIGGER_JENKINS_TOKEN }}\" \
+            --user \"${{ secrets.GHE_TRIGGER_JENKINS_USER }}:${{ secrets.GHE_TRIGGER_JENKINS_TOKEN }}\" \
             --data-urlencode \"PROJECT_NAME=${{ inputs.project-name }}\" \
             --data-urlencode \"PROJECT_ORGANIZATION=${{ inputs.project-organization }}\""
 
